@@ -32,16 +32,75 @@ void StarterBot::onFrame()
 {
     // Update our MapTools information
     m_mapTools.onFrame();
+    
+    const BWAPI::Unitset& myUnits = BWAPI::Broodwar->self()->getUnits();
+    auto workerUnits = 0;
+    for (auto& unit : myUnits)
+    {
+        if (unit->getType().isWorker() && unit->isCompleted())
+        {
+            workerUnits++;
+        }
+    }
 
+    if(workerUnits<8)
+    {
+        trainAdditionalWorkers();
+        sendIdleWorkersToMinerals();
+    }
+    else if(workerUnits == 8)
+    {
+        auto offset = 100;
+        auto nexus = Tools::GetDepot();
+        
+        for (auto& unit : myUnits)
+        {
+            BWAPI::Position pos = nexus->getPosition();
+            if (unit->getType().isWorker() && unit->isGatheringMinerals())
+            {
+                BWAPI::Unit closestMineral = Tools::GetClosestUnitTo(unit, BWAPI::Broodwar->getMinerals());
+                BWAPI::Position closestMineralPosition = closestMineral->getPosition();
+                if (pos.x > closestMineralPosition.x)
+                {
+                    pos.x += offset;
+                }
+                else
+                {
+                    pos.x -= offset;
+                }
+                unit->move(pos);
+                offset += 30;
+            }
+            else if(unit->getType().isWorker() && unit->isIdle())
+            {
+                BWAPI::Position unitPos = unit->getPosition();
+                if( abs(unitPos.x - pos.x) < 100)
+                {
+                    BWAPI::Unit closestMineral = Tools::GetClosestUnitTo(unit, BWAPI::Broodwar->getMinerals());
+                    BWAPI::Position closestMineralPosition = closestMineral->getPosition();
+                    if (pos.x > closestMineralPosition.x)
+                    {
+                        pos.x += offset;
+                    }
+                    else
+                    {
+                        pos.x -= offset;
+                    }
+                    unit->move(pos);
+                    offset += 30;
+                }
+            }
+        }
+    }
+    
     // Send our idle workers to mine minerals so they don't just stand there
-    sendIdleWorkersToMinerals();
-
+    
     // Train more workers so we can gather more income
-    trainAdditionalWorkers();
+    //trainAdditionalWorkers();
 
     // Build more supply if we are going to run out soon
-    buildAdditionalSupply();
-
+    //buildAdditionalSupply();
+    BWAPI::Broodwar->drawTextScreen(BWAPI::Position(10, 20), "Junaid Haque, Fatema Haque");
     // Draw unit health bars, which brood war unfortunately does not do
     Tools::DrawUnitHealthBars();
 
