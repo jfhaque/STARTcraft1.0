@@ -69,7 +69,7 @@ void StarterBot::onFrame()
                     pos.x -= offset;
                 }
                 unit->move(pos);
-                offset += 30;
+                offset += 40;
             }
             else if(unit->getType().isWorker() && unit->isIdle())
             {
@@ -87,7 +87,7 @@ void StarterBot::onFrame()
                         pos.x -= offset;
                     }
                     unit->move(pos);
-                    offset += 30;
+                    offset += 40;
                 }
             }
         }
