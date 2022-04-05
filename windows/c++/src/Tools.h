@@ -12,6 +12,8 @@ namespace Tools
     BWAPI::Unit GetUnitOfType(BWAPI::UnitType type);
     BWAPI::Unit GetDepot();
 
+    std::vector<BWAPI::Unit> GetVectorOfUnitType(BWAPI::UnitType type);
+
     bool BuildBuilding(BWAPI::UnitType type);
 
     void DrawUnitBoundingBoxes();

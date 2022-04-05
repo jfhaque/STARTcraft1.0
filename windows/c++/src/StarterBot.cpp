@@ -47,6 +47,11 @@ void StarterBot::onFrame()
         scoutStartingPositions();
         isEnemyFound();
     }
+    
+    if(m_enemyFound && zealotsOwned >4)
+    {
+        startZealotRush();
+    }
 
     if(workersOwned ==8 && gatewaysOwned <=1) 
     {
@@ -127,6 +132,15 @@ void StarterBot::trainZealots(int gatewaysOwned)
     }
 }
 
+void StarterBot::startZealotRush()
+{
+    auto& zealots = Tools::GetVectorOfUnitType(BWAPI::UnitTypes::Protoss_Zealot);
+    for( auto& zealot : zealots)
+    {
+        Tools::SmartRightClick(zealot, m_randomEnemy);
+    }
+}
+
 // Train more workers so we can gather more income
 void StarterBot::trainAdditionalWorkers()
 {
@@ -194,6 +208,9 @@ void StarterBot:: isEnemyFound()
             || enemyRace == BWAPI::Races::Protoss
             || enemyRace == BWAPI::Races::Terran)
         {
+            m_enemyRace = enemyRace;
+            m_enemyBasePosition = m_scout->getPosition();
+            m_randomEnemy = unit;
             m_enemyFound = true;
         }
         

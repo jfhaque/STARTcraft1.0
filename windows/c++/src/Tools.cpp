@@ -36,6 +36,19 @@ int Tools::CountUnitsOfType(BWAPI::UnitType type, const BWAPI::Unitset& units)
     return sum;
 }
 
+std::vector<BWAPI::Unit> Tools::GetVectorOfUnitType (BWAPI::UnitType type)
+{
+    auto& units = BWAPI::Broodwar->self()->getUnits();
+    std::vector<BWAPI::Unit> set;
+    for(auto& unit: units)
+    {
+        if(unit->getType() == type)
+        {
+            set.push_back(unit);
+        }
+    }
+    return set;
+}
 
 BWAPI::Unit Tools::GetUnitOfType(BWAPI::UnitType type)
 {
