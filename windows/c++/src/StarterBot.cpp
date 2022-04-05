@@ -33,71 +33,38 @@ void StarterBot::onFrame()
     // Update our MapTools information
     m_mapTools.onFrame();
     
-    const BWAPI::Unitset& myUnits = BWAPI::Broodwar->self()->getUnits();
-    auto workerUnits = 0;
-    for (auto& unit : myUnits)
-    {
-        if (unit->getType().isWorker() && unit->isCompleted())
-        {
-            workerUnits++;
-        }
-    }
-
-    if(workerUnits<8)
-    {
-        trainAdditionalWorkers();
-        sendIdleWorkersToMinerals();
-    }
-    else if(workerUnits == 8)
-    {
-        auto offset = 100;
-        auto nexus = Tools::GetDepot();
-        
-        for (auto& unit : myUnits)
-        {
-            BWAPI::Position pos = nexus->getPosition();
-            if (unit->getType().isWorker() && unit->isGatheringMinerals())
-            {
-                BWAPI::Unit closestMineral = Tools::GetClosestUnitTo(unit, BWAPI::Broodwar->getMinerals());
-                BWAPI::Position closestMineralPosition = closestMineral->getPosition();
-                if (pos.x > closestMineralPosition.x)
-                {
-                    pos.x += offset;
-                }
-                else
-                {
-                    pos.x -= offset;
-                }
-                unit->move(pos);
-                offset += 30;
-            }
-            else if(unit->getType().isWorker() && unit->isIdle())
-            {
-                BWAPI::Position unitPos = unit->getPosition();
-                if( abs(unitPos.x - pos.x) < 100)
-                {
-                    BWAPI::Unit closestMineral = Tools::GetClosestUnitTo(unit, BWAPI::Broodwar->getMinerals());
-                    BWAPI::Position closestMineralPosition = closestMineral->getPosition();
-                    if (pos.x > closestMineralPosition.x)
-                    {
-                        pos.x += offset;
-                    }
-                    else
-                    {
-                        pos.x -= offset;
-                    }
-                    unit->move(pos);
-                    offset += 30;
-                }
-            }
-        }
-    }
     
     // Send our idle workers to mine minerals so they don't just stand there
+    sendIdleWorkersToMinerals();
     
+    auto workersOwned = Tools::CountUnitsOfType(BWAPI::Broodwar->self()->getRace().getWorker(), BWAPI::Broodwar->self()->getUnits());
+    auto zealotsOwned = Tools::CountUnitsOfType(BWAPI::UnitTypes::Protoss_Zealot, BWAPI::Broodwar->self()->getUnits());
+    auto gatewaysOwned = Tools::CountUnitsOfType(BWAPI::UnitTypes::Protoss_Gateway, BWAPI::Broodwar->self()->getUnits());
     // Train more workers so we can gather more income
-    //trainAdditionalWorkers();
+    
+    if(!m_scoutActive && !m_enemyFound)
+    {
+        scoutStartingPositions();
+    }
 
+    if(workersOwned ==8 && gatewaysOwned <=1) 
+    {
+        createAPylonAndGateways();
+        //scoutStartingPositions();
+    }  
+    else if(workersOwned <8 || (gatewaysOwned == 2 && workersOwned<10))
+    {
+        trainAdditionalWorkers();
+    }
+    else if ((Tools::GetTotalSupply(true) - BWAPI::Broodwar->self()->supplyUsed()) <=2)
+    {
+        buildAdditionalSupply();
+    }
+    else if(workersOwned>=10)
+    {
+        trainZealots(gatewaysOwned);
+    }
+    
     // Build more supply if we are going to run out soon
     //buildAdditionalSupply();
     BWAPI::Broodwar->drawTextScreen(BWAPI::Position(10, 20), "Junaid Haque, Fatema Haque");
@@ -108,6 +75,22 @@ void StarterBot::onFrame()
     drawDebugInformation();
 }
 
+void StarterBot::createAPylonAndGateways()
+{
+    auto pylonsOwned = Tools::CountUnitsOfType(BWAPI::UnitTypes::Protoss_Pylon, BWAPI::Broodwar->self()->getUnits());
+    if (BWAPI::Broodwar->self()->minerals() >= 100 && pylonsOwned == 0)
+    {
+        Tools::BuildBuilding(BWAPI::UnitTypes::Enum::Protoss_Pylon);
+        /*Tools::BuildBuilding(BWAPI::UnitTypes::Enum::Protoss_Gateway);
+        Tools::BuildBuilding(BWAPI::UnitTypes::Enum::Protoss_Gateway);*/
+    }
+
+    auto gatewaysOwned = Tools::CountUnitsOfType(BWAPI::UnitTypes::Protoss_Gateway, BWAPI::Broodwar->self()->getUnits());
+    if (pylonsOwned == 1 && BWAPI::Broodwar->self()->minerals() >= 150 && gatewaysOwned <= 2)
+    {
+        Tools::BuildBuilding(BWAPI::UnitTypes::Enum::Protoss_Gateway);
+    }
+}
 // Send our idle workers to mine minerals so they don't just stand there
 void StarterBot::sendIdleWorkersToMinerals()
 {
@@ -124,6 +107,21 @@ void StarterBot::sendIdleWorkersToMinerals()
 
             // If a valid mineral was found, right click it with the unit in order to start harvesting
             if (closestMineral) { unit->rightClick(closestMineral); }
+        }
+    }
+}
+
+void StarterBot::trainZealots(int gatewaysOwned)
+{
+    if(gatewaysOwned >0)
+    {
+        const BWAPI::Unitset& myUnits = BWAPI::Broodwar->self()->getUnits();
+        for (auto& unit : myUnits)
+        {
+            if(unit->getType() == BWAPI::UnitTypes::Protoss_Gateway && !unit->isTraining())
+            {
+                unit->train(BWAPI::UnitTypes::Protoss_Zealot);
+            }
         }
     }
 }
@@ -152,7 +150,7 @@ void StarterBot::buildAdditionalSupply()
     const int unusedSupply = Tools::GetTotalSupply(true) - BWAPI::Broodwar->self()->supplyUsed();
 
     // If we have a sufficient amount of supply, we don't need to do anything
-    if (unusedSupply >= 2) { return; }
+    if (unusedSupply >= 4) { return; }
 
     // Otherwise, we are going to build a supply provider
     const BWAPI::UnitType supplyProviderType = BWAPI::Broodwar->self()->getRace().getSupplyProvider();
@@ -162,6 +160,33 @@ void StarterBot::buildAdditionalSupply()
     {
         BWAPI::Broodwar->printf("Started Building %s", supplyProviderType.getName().c_str());
     }
+}
+
+void StarterBot::scoutStartingPositions()
+{
+        BWAPI::Unit scout = Tools::GetUnitOfType(BWAPI::Broodwar->self()->getRace().getWorker());
+        auto& startLocations = BWAPI::Broodwar->getStartLocations();
+
+        if (scout!=NULL)
+        {
+            for (auto& loc : startLocations)
+            {
+                if (BWAPI::Broodwar->isExplored(loc)) { continue; }
+
+                BWAPI::Position pos(loc);
+                if (scout->getPosition() == pos)
+                {
+                    m_scoutActive = false;
+                }
+                if (!m_scoutActive)
+                {
+                    scout->move(pos);
+                    m_scoutActive = true;
+                    break;
+                }
+            }
+        }
+
 }
 
 // Draw some relevent information to the screen to help us debug the bot
