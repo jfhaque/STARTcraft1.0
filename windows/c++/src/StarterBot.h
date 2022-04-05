@@ -7,7 +7,7 @@
 class StarterBot
 {
     MapTools m_mapTools;
-	bool m_scoutActive = false;
+	BWAPI::Unit m_scout = nullptr;
 	bool m_enemyFound = false;
 	bool m_currentlyBuilding = false;
 	enum races{Protoss, Terrans, Zerg};
@@ -25,6 +25,7 @@ public:
     void drawDebugInformation();
 	void createAPylonAndGateways();
 	void scoutStartingPositions();
+	void isEnemyFound();
 
     // functions that are triggered by various BWAPI events from main.cpp
 	void onStart();
@@ -38,4 +39,6 @@ public:
 	void onUnitShow(BWAPI::Unit unit);
 	void onUnitHide(BWAPI::Unit unit);
 	void onUnitRenegade(BWAPI::Unit unit);
+
+	bool isScout(BWAPI::Unit unit);
 };

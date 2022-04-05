@@ -1,4 +1,5 @@
 #include "Tools.h"
+#include "StarterBot.h"
 
 BWAPI::Unit Tools::GetClosestUnitTo(BWAPI::Position p, const BWAPI::Unitset& units)
 {
@@ -42,7 +43,10 @@ BWAPI::Unit Tools::GetUnitOfType(BWAPI::UnitType type)
     for (auto& unit : BWAPI::Broodwar->self()->getUnits())
     {
         // if the unit is of the correct type, and it actually has been constructed, return it
-        if (unit->getType() == type && unit->isCompleted() && !unit->isMoving())
+        if (unit->getType() == type && unit->isCompleted() 
+            //&& !unit->isMoving()
+            //&& !StarterBot::isScout(unit)
+            )
         {
             return unit;
         }
@@ -69,12 +73,12 @@ bool Tools::BuildBuilding(BWAPI::UnitType type)
     BWAPI::Unit builder = Tools::GetUnitOfType(builderType);
     if (!builder) { return false; }
 
-    if(builder->isConstructing())
+    /*if(builder->isConstructing())
     {
         return false;
     }
     else if (!builder->isConstructing()) 
-    {
+    {*/
         // Get a location that we want to build the building next to
         BWAPI::TilePosition desiredPos = BWAPI::Broodwar->self()->getStartLocation();
 
@@ -83,7 +87,7 @@ bool Tools::BuildBuilding(BWAPI::UnitType type)
         bool buildingOnCreep = type.requiresCreep();
         BWAPI::TilePosition buildPos = BWAPI::Broodwar->getBuildLocation(type, desiredPos, maxBuildRange, buildingOnCreep);
         return builder->build(type, buildPos);
-    }
+    //}
 }
 
 void Tools::DrawUnitCommands()

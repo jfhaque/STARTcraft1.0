@@ -42,9 +42,10 @@ void StarterBot::onFrame()
     auto gatewaysOwned = Tools::CountUnitsOfType(BWAPI::UnitTypes::Protoss_Gateway, BWAPI::Broodwar->self()->getUnits());
     // Train more workers so we can gather more income
     
-    if(!m_scoutActive && !m_enemyFound)
+    if(!m_enemyFound)
     {
         scoutStartingPositions();
+        isEnemyFound();
     }
 
     if(workersOwned ==8 && gatewaysOwned <=1) 
@@ -100,7 +101,7 @@ void StarterBot::sendIdleWorkersToMinerals()
     for (auto& unit : myUnits)
     {
         // Check the unit type, if it is an idle worker, then we want to send it somewhere
-        if (unit->getType().isWorker() && unit->isIdle())
+        if (unit->getType().isWorker() && unit->isIdle() && unit != m_scout)
         {
             // Get the closest mineral to this worker unit
             BWAPI::Unit closestMineral = Tools::GetClosestUnitTo(unit, BWAPI::Broodwar->getMinerals());
@@ -164,29 +165,39 @@ void StarterBot::buildAdditionalSupply()
 
 void StarterBot::scoutStartingPositions()
 {
-        BWAPI::Unit scout = Tools::GetUnitOfType(BWAPI::Broodwar->self()->getRace().getWorker());
-        auto& startLocations = BWAPI::Broodwar->getStartLocations();
-
-        if (scout!=NULL)
+    BWAPI::Unit scout = Tools::GetUnitOfType(BWAPI::Broodwar->self()->getRace().getWorker());
+    auto& startLocations = BWAPI::Broodwar->getStartLocations();
+    
+    if (scout != NULL)
+    {
+        for (auto& loc : startLocations)
         {
-            for (auto& loc : startLocations)
+            if (BWAPI::Broodwar->isExplored(loc)) { continue; }
+            if (!m_scout || m_scout->isIdle())
             {
-                if (BWAPI::Broodwar->isExplored(loc)) { continue; }
-
                 BWAPI::Position pos(loc);
-                if (scout->getPosition() == pos)
-                {
-                    m_scoutActive = false;
-                }
-                if (!m_scoutActive)
-                {
-                    scout->move(pos);
-                    m_scoutActive = true;
-                    break;
-                }
+                scout->move(pos);
+                m_scout = scout;
+                break;
             }
         }
+    }
+}
 
+void StarterBot:: isEnemyFound()
+{
+    auto& units = BWAPI::Broodwar->enemy()->getUnits();
+    for(auto& unit : units)
+    {
+        BWAPI::Race enemyRace = unit->getType().getRace();
+        if (enemyRace == BWAPI::Races::Zerg
+            || enemyRace == BWAPI::Races::Protoss
+            || enemyRace == BWAPI::Races::Terran)
+        {
+            m_enemyFound = true;
+        }
+        
+    } 
 }
 
 // Draw some relevent information to the screen to help us debug the bot
@@ -252,4 +263,13 @@ void StarterBot::onUnitHide(BWAPI::Unit unit)
 void StarterBot::onUnitRenegade(BWAPI::Unit unit)
 { 
 	
+}
+
+bool StarterBot::isScout(BWAPI::Unit unit)
+{
+    if(unit==m_scout)
+    {
+        return true;
+    }
+    return false;
 }
