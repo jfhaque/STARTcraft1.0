@@ -45,7 +45,7 @@ BWAPI::Unit Tools::GetUnitOfType(BWAPI::UnitType type)
         // if the unit is of the correct type, and it actually has been constructed, return it
         if (unit->getType() == type && unit->isCompleted() 
             //&& !unit->isMoving()
-            //&& !StarterBot::isScout(unit)
+            && unit->getID() != m_scoutID
             )
         {
             return unit;
