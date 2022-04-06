@@ -101,7 +101,10 @@ bool Tools::BuildBuilding(BWAPI::UnitType type, bool forceConstruct)
     // If we can't find a valid builder unit, then we have to cancel the building
     BWAPI::Unit builder = Tools::GetUnitOfTypeClosestTo(builderType, BWAPI::Position (desiredPos));
     if (!builder) { return false; }
-
+    if(builder->isConstructing())
+    {
+        return false;
+    }
     else if (!builder->isConstructing())
     {
         // Ask BWAPI for a building location near the desired position for the type

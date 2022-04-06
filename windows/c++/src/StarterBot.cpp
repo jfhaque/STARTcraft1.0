@@ -48,25 +48,25 @@ void StarterBot::onFrame()
         isEnemyFound();
     }
     
-    if(m_enemyFound && zealotsOwned >5)
+    if(m_enemyFound && zealotsOwned >15)
     {
         startZealotRush();
     }
 
-    if(workersOwned ==8 && gatewaysOwned <=1) 
+    if(workersOwned ==8 && gatewaysOwned <=2) 
     {
         createAPylonAndGateways();
         //scoutStartingPositions();
     }  
-    else if(workersOwned <8 || (gatewaysOwned == 2 && workersOwned<10))
+    else if(workersOwned <8 || (gatewaysOwned == 3 && workersOwned<15))
     {
         trainAdditionalWorkers();
     }
-    else if ((Tools::GetTotalSupply(true) - BWAPI::Broodwar->self()->supplyUsed()) <=4 && Tools::GetTotalSupply(true)>7)
+    if ((Tools::GetTotalSupply(true) - BWAPI::Broodwar->self()->supplyUsed()) <=4 && Tools::GetTotalSupply(true)>7)
     {
         buildAdditionalSupply();
     }
-    else if(workersOwned>=10)
+    if(workersOwned>=10)
     {
         trainZealots(gatewaysOwned);
     }
@@ -92,7 +92,7 @@ void StarterBot::createAPylonAndGateways()
     }
 
     auto gatewaysOwned = Tools::CountUnitsOfType(BWAPI::UnitTypes::Protoss_Gateway, BWAPI::Broodwar->self()->getUnits());
-    if (pylonsOwned == 1 && BWAPI::Broodwar->self()->minerals() >= 150 && gatewaysOwned <= 2)
+    if (pylonsOwned >= 1 && BWAPI::Broodwar->self()->minerals() >= 150 && gatewaysOwned <= 3)
     {
         Tools::BuildBuilding(BWAPI::UnitTypes::Enum::Protoss_Gateway, true);
     }
@@ -136,15 +136,26 @@ void StarterBot::startZealotRush()
 {
     auto& units = BWAPI::Broodwar->self()->getUnits();
     auto& enemyUnits = BWAPI::Broodwar->enemy()->getUnits();
+    BWAPI::Unit targetEnemy = nullptr;
+
+    for (auto& enemy : enemyUnits)
+    {
+        if (enemy->isVisible() && enemy->isAttacking())
+        {
+            targetEnemy = enemy;
+            break;
+        }
+    }
+
     for( auto& unit : units)
     {
         if(unit->isIdle() && unit->getType()==BWAPI::UnitTypes::Protoss_Zealot && unit->isCompleted())
         {
             unit->move(m_enemyBasePosition, true);
         }
-        if(unit->canAttack() && unit->getType() == BWAPI::UnitTypes::Protoss_Zealot)
+        if(targetEnemy!= nullptr && unit->getType() == BWAPI::UnitTypes::Protoss_Zealot)
         {
-            unit->attack(Tools::GetClosestUnitTo(unit, enemyUnits));
+            unit->attack(targetEnemy);
         }
     }
 }
