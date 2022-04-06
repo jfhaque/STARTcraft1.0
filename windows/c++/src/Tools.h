@@ -10,11 +10,10 @@ namespace Tools
     int CountUnitsOfType(BWAPI::UnitType type, const BWAPI::Unitset& units); 
 
     BWAPI::Unit GetUnitOfType(BWAPI::UnitType type);
+    BWAPI::Unit GetUnitOfTypeClosestTo(BWAPI::UnitType type, BWAPI::Position p);
     BWAPI::Unit GetDepot();
 
-    std::vector<BWAPI::Unit> GetVectorOfUnitType(BWAPI::UnitType type);
-
-    bool BuildBuilding(BWAPI::UnitType type);
+    bool BuildBuilding(BWAPI::UnitType type, bool forceConstruct = false);
 
     void DrawUnitBoundingBoxes();
     void DrawUnitCommands();

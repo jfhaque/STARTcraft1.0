@@ -48,7 +48,7 @@ void StarterBot::onFrame()
         isEnemyFound();
     }
     
-    if(m_enemyFound && zealotsOwned >4)
+    if(m_enemyFound && zealotsOwned >5)
     {
         startZealotRush();
     }
@@ -62,7 +62,7 @@ void StarterBot::onFrame()
     {
         trainAdditionalWorkers();
     }
-    else if ((Tools::GetTotalSupply(true) - BWAPI::Broodwar->self()->supplyUsed()) <=2)
+    else if ((Tools::GetTotalSupply(true) - BWAPI::Broodwar->self()->supplyUsed()) <=4 && Tools::GetTotalSupply(true)>7)
     {
         buildAdditionalSupply();
     }
@@ -94,7 +94,7 @@ void StarterBot::createAPylonAndGateways()
     auto gatewaysOwned = Tools::CountUnitsOfType(BWAPI::UnitTypes::Protoss_Gateway, BWAPI::Broodwar->self()->getUnits());
     if (pylonsOwned == 1 && BWAPI::Broodwar->self()->minerals() >= 150 && gatewaysOwned <= 2)
     {
-        Tools::BuildBuilding(BWAPI::UnitTypes::Enum::Protoss_Gateway);
+        Tools::BuildBuilding(BWAPI::UnitTypes::Enum::Protoss_Gateway, true);
     }
 }
 // Send our idle workers to mine minerals so they don't just stand there
@@ -134,10 +134,18 @@ void StarterBot::trainZealots(int gatewaysOwned)
 
 void StarterBot::startZealotRush()
 {
-    auto& zealots = Tools::GetVectorOfUnitType(BWAPI::UnitTypes::Protoss_Zealot);
-    for( auto& zealot : zealots)
+    auto& units = BWAPI::Broodwar->self()->getUnits();
+    auto& enemyUnits = BWAPI::Broodwar->enemy()->getUnits();
+    for( auto& unit : units)
     {
-        Tools::SmartRightClick(zealot, m_randomEnemy);
+        if(unit->isIdle() && unit->getType()==BWAPI::UnitTypes::Protoss_Zealot && unit->isCompleted())
+        {
+            unit->move(m_enemyBasePosition, true);
+        }
+        if(unit->canAttack() && unit->getType() == BWAPI::UnitTypes::Protoss_Zealot)
+        {
+            unit->attack(Tools::GetClosestUnitTo(unit, enemyUnits));
+        }
     }
 }
 
@@ -190,6 +198,7 @@ void StarterBot::scoutStartingPositions()
             if (!m_scout || m_scout->isIdle())
             {
                 BWAPI::Position pos(loc);
+                m_enemyBasePosition = pos;
                 scout->move(pos);
                 m_scout = scout;
                 break;
@@ -208,9 +217,9 @@ void StarterBot:: isEnemyFound()
             || enemyRace == BWAPI::Races::Protoss
             || enemyRace == BWAPI::Races::Terran)
         {
+            
             m_enemyRace = enemyRace;
-            m_enemyBasePosition = m_scout->getPosition();
-            m_randomEnemy = unit;
+            m_randomEnemy = Tools::GetClosestUnitTo(m_scout, units);
             m_enemyFound = true;
         }
         
