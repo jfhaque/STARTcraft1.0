@@ -50,7 +50,7 @@ void StarterBot::onFrame()
     
     
     if(m_enemyFound 
-        //&& zealotsOwned> 6
+        && zealotsOwned> 6
         )
     {
         startZealotRush();
@@ -177,10 +177,9 @@ void StarterBot::zealotsAttack()
             {
                 /* v contains x */
             }
-            else 
+            else
             {
                 auto closestEnemy = Tools::GetClosestVisibleEnemyTo(unit);
-                unit->stop();
                 unit->attack(closestEnemy);
                 m_currentlyAttackingUnits.push_back(unit);
                 /* v does not contain x */
@@ -293,6 +292,14 @@ void StarterBot::onSendText(std::string text)
     if (text == "/map")
     {
         m_mapTools.toggleDraw();
+    }
+    else if(text == "speed1")
+    {
+        BWAPI::Broodwar->setLocalSpeed(1);
+    }
+    else if (text == "speed5")
+    {
+        BWAPI::Broodwar->setLocalSpeed(5);
     }
 }
 

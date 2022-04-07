@@ -29,7 +29,7 @@ BWAPI::Unit Tools::GetClosestVisibleEnemyTo(BWAPI::Unit unit)
 
     for (auto& u : enemyUnits)
     {
-        if (!closestUnit || u->getDistance(unit->getPosition()) < closestUnit->getDistance(unit->getPosition()) && u->isVisible())
+        if (!closestUnit || u->getDistance(unit->getPosition()) < closestUnit->getDistance(unit->getPosition()) && u->isVisible() && u->isMoving())
         {
             closestUnit = u;
         }
