@@ -22,6 +22,21 @@ BWAPI::Unit Tools::GetClosestUnitTo(BWAPI::Unit unit, const BWAPI::Unitset& unit
     return GetClosestUnitTo(unit->getPosition(), units);
 }
 
+BWAPI::Unit Tools::GetClosestVisibleEnemyTo(BWAPI::Unit unit)
+{
+    auto& enemyUnits = BWAPI::Broodwar->enemy()->getUnits();
+    BWAPI::Unit closestUnit = nullptr;
+
+    for (auto& u : enemyUnits)
+    {
+        if (!closestUnit || u->getDistance(unit->getPosition()) < closestUnit->getDistance(unit->getPosition()) && u->isVisible())
+        {
+            closestUnit = u;
+        }
+    }
+
+    return closestUnit;
+}
 BWAPI::Unit Tools::GetUnitOfTypeClosestTo(BWAPI::UnitType type, BWAPI::Position p)
 {
     BWAPI::Unit closestUnit = nullptr;
@@ -50,6 +65,7 @@ int Tools::CountUnitsOfType(BWAPI::UnitType type, const BWAPI::Unitset& units)
 
     return sum;
 }
+
 
 BWAPI::Unit Tools::GetUnitOfType(BWAPI::UnitType type)
 {

@@ -54,8 +54,18 @@ void StarterBot::onFrame()
     {
         startZealotRush();
     }
+    //fleeZealot();
+    zealotsAttack();
+    if ((Tools::GetTotalSupply(true) - BWAPI::Broodwar->self()->supplyUsed()) <= 12 && Tools::GetTotalSupply(true) > 20)
+    {
+        buildAdditionalSupply();
+    }
 
-    if(workersOwned >= 8 && gatewaysOwned <=2) 
+    if (workersOwned >= 10)
+    {
+        trainZealots(gatewaysOwned);
+    }
+    if (workersOwned >= 8 && gatewaysOwned <= 2)
     {
         createAPylonAndGateways();
         //scoutStartingPositions();
@@ -90,6 +100,18 @@ void StarterBot::onFrame()
     drawDebugInformation();
 }
 
+void StarterBot::fleeZealot()
+{
+    auto& units = BWAPI::Broodwar->self()->getUnits();
+    for(auto& unit:units)
+    {
+        if(unit->getType() == BWAPI::UnitTypes::Protoss_Zealot && (unit->getShields()<10))
+        {
+            unit->move(BWAPI::Position(BWAPI::Broodwar->self()->getStartLocation()));
+        }
+    }
+}
+
 void StarterBot::createAPylonAndGateways()
 {
     auto pylonsOwned = Tools::CountUnitsOfType(BWAPI::UnitTypes::Protoss_Pylon, BWAPI::Broodwar->self()->getUnits());
@@ -101,7 +123,8 @@ void StarterBot::createAPylonAndGateways()
     }
 
     auto gatewaysOwned = Tools::CountUnitsOfType(BWAPI::UnitTypes::Protoss_Gateway, BWAPI::Broodwar->self()->getUnits());
-    if (pylonsOwned >= 1 && BWAPI::Broodwar->self()->minerals() >= 150 && gatewaysOwned <= 3)
+
+    if (pylonsOwned >= 1 && BWAPI::Broodwar->self()->minerals() >= 150 && gatewaysOwned <= 1)
     {
         Tools::BuildBuilding(BWAPI::UnitTypes::Enum::Protoss_Gateway, true);
     }
@@ -118,7 +141,7 @@ void StarterBot::sendIdleWorkersToMinerals()
         if (unit->getType().isWorker() && unit->isIdle() && unit != m_scout)
         {
             // Get the closest mineral to this worker unit
-            BWAPI::Unit closestMineral = Tools::GetClosestUnitTo(unit, BWAPI::Broodwar->getMinerals());
+            BWAPI::Unit closestMineral = Tools::GetClosestUnitTo(Tools::GetDepot(), BWAPI::Broodwar->getMinerals());
 
             // If a valid mineral was found, right click it with the unit in order to start harvesting
             if (closestMineral) { unit->rightClick(closestMineral); }
@@ -144,31 +167,41 @@ void StarterBot::trainZealots(int gatewaysOwned)
 void StarterBot::startZealotRush()
 {
     auto& units = BWAPI::Broodwar->self()->getUnits();
-    auto& enemyUnits = BWAPI::Broodwar->enemy()->getUnits();
-    BWAPI::Unit targetEnemy = nullptr;
-
-    for (auto& enemy : enemyUnits)
+    BWAPI::Unit targetEnemy = nullptr;    
+    for (auto& unit : units)
     {
-        if (enemy->isVisible() && enemy->isAttacking())
+        if (unit->isIdle() && unit->getType() == BWAPI::UnitTypes::Protoss_Zealot && unit->isCompleted() && unit->getShields() > 40)
         {
-            targetEnemy = enemy;
-            break;
-        }
-    }
-
-    for( auto& unit : units)
-    {
-        if(unit->isIdle() && unit->getType()==BWAPI::UnitTypes::Protoss_Zealot && unit->isCompleted())
-        {
-            unit->move(m_enemyBasePosition, true);
-        }
-        if(targetEnemy!= nullptr && unit->getType() == BWAPI::UnitTypes::Protoss_Zealot)
-        {
-            unit->attack(targetEnemy);
+            unit->move(m_enemyBasePosition,true);
         }
     }
 }
 
+void StarterBot::zealotsAttack()
+{
+    auto& units = BWAPI::Broodwar->self()->getUnits();
+    auto& enemyUnits = BWAPI::Broodwar->enemy()->getUnits();
+
+    for (auto& unit : units) 
+    {
+        auto closestEnemy = Tools::GetClosestVisibleEnemyTo(unit);
+        if (unit->getType() == BWAPI::UnitTypes::Protoss_Zealot && unit->canAttackUnit() && closestEnemy->isVisible())
+        {
+            if (std::find(m_currentlyAttackingUnits.begin(), m_currentlyAttackingUnits.end(), unit) != m_currentlyAttackingUnits.end()) 
+            {
+                /* v contains x */
+            }
+            else 
+            {
+                auto closestEnemy = Tools::GetClosestVisibleEnemyTo(unit);
+                unit->stop();
+                unit->attack(closestEnemy);
+                m_currentlyAttackingUnits.push_back(unit);
+                /* v does not contain x */
+            }
+        }
+    }
+}
 // Train more workers so we can gather more income
 void StarterBot::trainAdditionalWorkers()
 {
@@ -198,7 +231,7 @@ void StarterBot::buildAdditionalSupply()
     // Otherwise, we are going to build a supply provider
     const BWAPI::UnitType supplyProviderType = BWAPI::Broodwar->self()->getRace().getSupplyProvider();
 
-    const bool startedBuilding = Tools::BuildBuilding(supplyProviderType);
+    const bool startedBuilding = Tools::BuildBuilding(supplyProviderType,true);
     if (startedBuilding)
     {
         BWAPI::Broodwar->printf("Started Building %s", supplyProviderType.getName().c_str());
@@ -237,10 +270,11 @@ void StarterBot:: isEnemyFound()
             || enemyRace == BWAPI::Races::Protoss
             || enemyRace == BWAPI::Races::Terran)
         {
-            
-            m_enemyRace = enemyRace;
-            m_randomEnemy = Tools::GetClosestUnitTo(m_scout, units);
+            m_scout->move(BWAPI::Position(BWAPI::Broodwar->self()->getStartLocation()));
+            //m_enemyRace = enemyRace;
+            //m_randomEnemy = Tools::GetClosestUnitTo(m_scout, units);
             m_enemyFound = true;
+            m_scout = nullptr;
         }
         
     } 
