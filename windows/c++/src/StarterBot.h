@@ -13,7 +13,7 @@ class StarterBot
 	bool m_enemyFound = false;
 	BWAPI::Position m_enemyBasePosition;
 	bool m_currentlyBuilding = false;
-
+	std::vector<BWAPI::Unit> m_currentlyAttackingUnits;
 public:
 
     StarterBot();
@@ -28,6 +28,8 @@ public:
 	void scoutStartingPositions();
 	void isEnemyFound();
 	void startZealotRush();
+	void fleeZealot();
+	void zealotsAttack();
 
     // functions that are triggered by various BWAPI events from main.cpp
 	void onStart();
