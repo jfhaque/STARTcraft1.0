@@ -41,6 +41,8 @@ void StarterBot::onFrame()
     auto zealotsOwned = Tools::CountUnitsOfType(BWAPI::UnitTypes::Protoss_Zealot, BWAPI::Broodwar->self()->getUnits());
     auto gatewaysOwned = Tools::CountUnitsOfType(BWAPI::UnitTypes::Protoss_Gateway, BWAPI::Broodwar->self()->getUnits());
     // Train more workers so we can gather more income
+    auto totalWorkers = workersOwned + zealotsOwned;
+    
     
     if(!m_enemyFound)
     {
@@ -48,17 +50,17 @@ void StarterBot::onFrame()
         isEnemyFound();
     }
     
-    if(m_enemyFound && zealotsOwned >15)
+    if(m_enemyFound && zealotsOwned > 5)
     {
         startZealotRush();
     }
 
-    if(workersOwned ==8 && gatewaysOwned <=2) 
+    if(workersOwned >= 8 && gatewaysOwned <=2) 
     {
         createAPylonAndGateways();
         //scoutStartingPositions();
     }  
-    else if(workersOwned <8 || (gatewaysOwned == 3 && workersOwned<15))
+    if(workersOwned < 16)
     {
         trainAdditionalWorkers();
     }
@@ -70,7 +72,14 @@ void StarterBot::onFrame()
     {
         trainZealots(gatewaysOwned);
     }
-    
+    if (totalWorkers <= Tools::GetTotalSupply(true))
+    {
+        auto diff = Tools::GetTotalSupply(true) - totalWorkers;
+        if (diff <= 1)
+        {
+            Tools::BuildBuilding(BWAPI::UnitTypes::Enum::Protoss_Pylon);
+        }
+    }
     // Build more supply if we are going to run out soon
     //buildAdditionalSupply();
     BWAPI::Broodwar->drawTextScreen(BWAPI::Position(10, 20), "Junaid Haque, Fatema Haque");
@@ -119,7 +128,7 @@ void StarterBot::sendIdleWorkersToMinerals()
 
 void StarterBot::trainZealots(int gatewaysOwned)
 {
-    if(gatewaysOwned >0)
+    if(gatewaysOwned > 0)
     {
         const BWAPI::Unitset& myUnits = BWAPI::Broodwar->self()->getUnits();
         for (auto& unit : myUnits)
