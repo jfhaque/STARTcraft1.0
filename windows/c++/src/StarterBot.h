@@ -31,6 +31,8 @@ public:
 	void startZealotRush();
 	void fleeZealot();
 	void zealotsAttack();
+	void zealotRush();
+	void photonCannonRush();
 
     // functions that are triggered by various BWAPI events from main.cpp
 	void onStart();

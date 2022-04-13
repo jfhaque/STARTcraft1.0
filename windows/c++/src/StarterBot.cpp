@@ -4,16 +4,16 @@
 
 StarterBot::StarterBot()
 {
-    
+
 }
 
 // Called when the bot starts!
 void StarterBot::onStart()
 {
     // Set our BWAPI options here    
-	BWAPI::Broodwar->setLocalSpeed(10);
+    BWAPI::Broodwar->setLocalSpeed(10);
     BWAPI::Broodwar->setFrameSkip(0);
-    
+
     // Enable the flag that tells BWAPI top let users enter input while bot plays
     BWAPI::Broodwar->enableFlag(BWAPI::Flag::UserInput);
 
@@ -22,7 +22,7 @@ void StarterBot::onStart()
 }
 
 // Called whenever the game ends and tells you if you won or not
-void StarterBot::onEnd(bool isWinner) 
+void StarterBot::onEnd(bool isWinner)
 {
     std::cout << "We " << (isWinner ? "won!" : "lost!") << "\n";
 }
@@ -32,26 +32,67 @@ void StarterBot::onFrame()
 {
     // Update our MapTools information
     m_mapTools.onFrame();
-    
-    
+
+
     // Send our idle workers to mine minerals so they don't just stand there
     sendIdleWorkersToMinerals();
+
+
+    if (!m_enemyFound)
+    {
+        scoutStartingPositions();
+        isEnemyFound();
+    }
+    photonCannonRush();
+    // Build more supply if we are going to run out soon
+    //buildAdditionalSupply();
+    BWAPI::Broodwar->drawTextScreen(BWAPI::Position(10, 20), "Junaid Haque, Fatema Haque");
+    // Draw unit health bars, which brood war unfortunately does not do
+    Tools::DrawUnitHealthBars();
+
+    // Draw some relevent information to the screen to help us debug the bot
+    drawDebugInformation();
+}
+
+void StarterBot::photonCannonRush()
+{
+    auto workersOwned = Tools::CountUnitsOfType(BWAPI::Broodwar->self()->getRace().getWorker(), BWAPI::Broodwar->self()->getUnits());
+    auto zealotsOwned = Tools::CountUnitsOfType(BWAPI::UnitTypes::Protoss_Zealot, BWAPI::Broodwar->self()->getUnits());
+    auto gatewaysOwned = Tools::CountUnitsOfType(BWAPI::UnitTypes::Protoss_Gateway, BWAPI::Broodwar->self()->getUnits());
+    auto pylonsOwned = Tools::CountUnitsOfType(BWAPI::UnitTypes::Protoss_Pylon, BWAPI::Broodwar->self()->getUnits());
+    auto forgeBuilt = Tools::CountUnitsOfType(BWAPI::UnitTypes::Protoss_Forge, BWAPI::Broodwar->self()->getUnits());
+    trainAdditionalWorkers();
+    if (workersOwned >= 8 && workersOwned < 10) 
+    {
+        Tools::BuildBuilding(BWAPI::UnitTypes::Enum::Protoss_Pylon);
+    }
+    else if (workersOwned == 13) 
+    {
+        Tools::BuildBuilding(BWAPI::UnitTypes::Enum::Protoss_Forge);
+    }
+    else if (workersOwned == 17)
+    {
+        Tools::BuildBuilding(BWAPI::UnitTypes::Enum::Protoss_Pylon);
+    }
+    if (forgeBuilt == 1) 
+    {
+        Tools::BuildBuilding(BWAPI::UnitTypes::Enum::Protoss_Photon_Cannon);
+        Tools::BuildBuilding(BWAPI::UnitTypes::Enum::Protoss_Photon_Cannon);
+        Tools::BuildBuilding(BWAPI::UnitTypes::Enum::Protoss_Pylon);
+    }
     
+
+}
+void StarterBot::zealotRush()
+{
     auto workersOwned = Tools::CountUnitsOfType(BWAPI::Broodwar->self()->getRace().getWorker(), BWAPI::Broodwar->self()->getUnits());
     auto zealotsOwned = Tools::CountUnitsOfType(BWAPI::UnitTypes::Protoss_Zealot, BWAPI::Broodwar->self()->getUnits());
     auto gatewaysOwned = Tools::CountUnitsOfType(BWAPI::UnitTypes::Protoss_Gateway, BWAPI::Broodwar->self()->getUnits());
     auto pylonsOwned = Tools::CountUnitsOfType(BWAPI::UnitTypes::Protoss_Pylon, BWAPI::Broodwar->self()->getUnits());
     // Train more workers so we can gather more income
-    
-    if(!m_enemyFound)
-    {
-        scoutStartingPositions();
-        isEnemyFound();
-    }
-    
-    
-    if(m_enemyFound 
-        && zealotsOwned> 10
+
+    if (m_enemyFound
+        && zealotsOwned > 10
         )
     {
         startZealotRush();
@@ -63,30 +104,20 @@ void StarterBot::onFrame()
         buildAdditionalSupply();
     }
 
-    if (workersOwned >=10)
+    if (workersOwned >= 10)
     {
         trainZealots(gatewaysOwned);
     }
-    if((workersOwned ==8 && gatewaysOwned <=1) || (zealotsOwned==2))
+    if ((workersOwned == 8 && gatewaysOwned <= 1) || (zealotsOwned == 2))
     {
         buildAdditionalSupply();
         createGateways();
-        //scoutStartingPositions();
     }
 
-    else if(workersOwned <=8 || (pylonsOwned>=1 && workersOwned<10))
+    else if (workersOwned <= 8 || (pylonsOwned >= 1 && workersOwned < 10))
     {
         trainAdditionalWorkers();
     }
-    
-    // Build more supply if we are going to run out soon
-    //buildAdditionalSupply();
-    BWAPI::Broodwar->drawTextScreen(BWAPI::Position(10, 20), "Junaid Haque, Fatema Haque");
-    // Draw unit health bars, which brood war unfortunately does not do
-    Tools::DrawUnitHealthBars();
-
-    // Draw some relevent information to the screen to help us debug the bot
-    drawDebugInformation();
 }
 
 void StarterBot::fleeZealot()
@@ -265,10 +296,11 @@ void StarterBot:: isEnemyFound()
             || enemyRace == BWAPI::Races::Terran)
         {
             m_scout->move(BWAPI::Position(BWAPI::Broodwar->self()->getStartLocation()));
-            //m_enemyRace = enemyRace;
+            m_enemyRace = enemyRace;
             //m_randomEnemy = Tools::GetClosestUnitTo(m_scout, units);
             m_enemyFound = true;
             m_scout = nullptr;
+            break;
         }
         
     } 
