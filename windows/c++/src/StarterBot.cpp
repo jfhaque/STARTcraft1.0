@@ -62,23 +62,28 @@ void StarterBot::photonCannonRush()
     auto pylonsOwned = Tools::CountUnitsOfType(BWAPI::UnitTypes::Protoss_Pylon, BWAPI::Broodwar->self()->getUnits());
     auto forgeBuilt = Tools::CountUnitsOfType(BWAPI::UnitTypes::Protoss_Forge, BWAPI::Broodwar->self()->getUnits());
     trainAdditionalWorkers();
+    BWAPI::TilePosition desiredPos = BWAPI::TilePosition(m_enemyBasePosition);
     if (workersOwned >= 8 && workersOwned < 10) 
     {
-        Tools::BuildBuilding(BWAPI::UnitTypes::Enum::Protoss_Pylon);
+        BWAPI::TilePosition desiredPos = BWAPI::Broodwar->self()->getStartLocation();
+        Tools::BuildBuilding(BWAPI::UnitTypes::Enum::Protoss_Pylon, desiredPos);
     }
-    else if (workersOwned == 13) 
+    else if (workersOwned >= 13 && forgeBuilt == 0) 
     {
-        Tools::BuildBuilding(BWAPI::UnitTypes::Enum::Protoss_Forge);
+        BWAPI::TilePosition desiredPos = BWAPI::Broodwar->self()->getStartLocation();
+        Tools::BuildBuilding(BWAPI::UnitTypes::Enum::Protoss_Forge, desiredPos);
     }
-    else if (workersOwned == 17)
+    else if (workersOwned >= 17)
     {
-        Tools::BuildBuilding(BWAPI::UnitTypes::Enum::Protoss_Pylon);
+        BWAPI::TilePosition desiredPos = BWAPI::TilePosition(m_enemyBasePosition);
+        Tools::BuildBuilding(BWAPI::UnitTypes::Enum::Protoss_Pylon, desiredPos);
     }
     if (forgeBuilt == 1) 
     {
-        Tools::BuildBuilding(BWAPI::UnitTypes::Enum::Protoss_Photon_Cannon);
-        Tools::BuildBuilding(BWAPI::UnitTypes::Enum::Protoss_Photon_Cannon);
-        Tools::BuildBuilding(BWAPI::UnitTypes::Enum::Protoss_Pylon);
+        BWAPI::TilePosition desiredPos = BWAPI::TilePosition(m_enemyBasePosition);
+        Tools::BuildBuilding(BWAPI::UnitTypes::Enum::Protoss_Photon_Cannon, desiredPos);
+        Tools::BuildBuilding(BWAPI::UnitTypes::Enum::Protoss_Photon_Cannon, desiredPos);
+        Tools::BuildBuilding(BWAPI::UnitTypes::Enum::Protoss_Pylon, desiredPos);
     }
     
 
@@ -137,10 +142,10 @@ void StarterBot::createGateways()
     auto pylonsOwned = Tools::CountUnitsOfType(BWAPI::UnitTypes::Protoss_Pylon, BWAPI::Broodwar->self()->getUnits());
 
     auto gatewaysOwned = Tools::CountUnitsOfType(BWAPI::UnitTypes::Protoss_Gateway, BWAPI::Broodwar->self()->getUnits());
-
+    BWAPI::TilePosition desiredPos = BWAPI::Broodwar->self()->getStartLocation();
     if (pylonsOwned >= 1 && BWAPI::Broodwar->self()->minerals() >= 150 && gatewaysOwned <= 2)
     {
-        Tools::BuildBuilding(BWAPI::UnitTypes::Enum::Protoss_Gateway);
+        Tools::BuildBuilding(BWAPI::UnitTypes::Enum::Protoss_Gateway, desiredPos);
     }
 }
 // Send our idle workers to mine minerals so they don't just stand there
@@ -255,8 +260,8 @@ void StarterBot::buildAdditionalSupply()
 
     // Otherwise, we are going to build a supply provider
     const BWAPI::UnitType supplyProviderType = BWAPI::Broodwar->self()->getRace().getSupplyProvider();
-
-    const bool startedBuilding = Tools::BuildBuilding(supplyProviderType,true);
+    BWAPI::TilePosition desiredPos = BWAPI::Broodwar->self()->getStartLocation();
+    const bool startedBuilding = Tools::BuildBuilding(supplyProviderType,desiredPos,true);
     if (startedBuilding)
     {
         BWAPI::Broodwar->printf("Started Building %s", supplyProviderType.getName().c_str());

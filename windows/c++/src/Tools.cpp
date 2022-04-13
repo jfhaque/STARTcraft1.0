@@ -93,7 +93,7 @@ BWAPI::Unit Tools::GetDepot()
 }
 
 // Attempt tp construct a building of a given type 
-bool Tools::BuildBuilding(BWAPI::UnitType type, bool forceConstruct)
+bool Tools::BuildBuilding(BWAPI::UnitType type, BWAPI::TilePosition desired, bool forceConstruct)
 {
     // Get the type of unit that is required to build the desired building
     BWAPI::UnitType builderType = type.whatBuilds().first;
@@ -112,7 +112,8 @@ bool Tools::BuildBuilding(BWAPI::UnitType type, bool forceConstruct)
     }
     
     // Get a location that we want to build the building next to
-    BWAPI::TilePosition desiredPos = BWAPI::Broodwar->self()->getStartLocation();
+    /*BWAPI::TilePosition desiredPos = BWAPI::Broodwar->self()->getStartLocation();*/
+    BWAPI::TilePosition desiredPos = desired;
 
     // Get a unit that we own that is of the given type so it can build
     // If we can't find a valid builder unit, then we have to cancel the building

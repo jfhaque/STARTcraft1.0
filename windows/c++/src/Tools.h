@@ -14,7 +14,7 @@ namespace Tools
     BWAPI::Unit GetUnitOfTypeClosestTo(BWAPI::UnitType type, BWAPI::Position p);
     BWAPI::Unit GetDepot();
 
-    bool BuildBuilding(BWAPI::UnitType type, bool forceConstruct = false);
+    bool BuildBuilding(BWAPI::UnitType type, BWAPI::TilePosition desiredPos, bool forceConstruct = false);
 
     void DrawUnitBoundingBoxes();
     void DrawUnitCommands();
