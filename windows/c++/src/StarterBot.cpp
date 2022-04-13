@@ -40,9 +40,8 @@ void StarterBot::onFrame()
     auto workersOwned = Tools::CountUnitsOfType(BWAPI::Broodwar->self()->getRace().getWorker(), BWAPI::Broodwar->self()->getUnits());
     auto zealotsOwned = Tools::CountUnitsOfType(BWAPI::UnitTypes::Protoss_Zealot, BWAPI::Broodwar->self()->getUnits());
     auto gatewaysOwned = Tools::CountUnitsOfType(BWAPI::UnitTypes::Protoss_Gateway, BWAPI::Broodwar->self()->getUnits());
+    auto pylonsOwned = Tools::CountUnitsOfType(BWAPI::UnitTypes::Protoss_Pylon, BWAPI::Broodwar->self()->getUnits());
     // Train more workers so we can gather more income
-    auto totalWorkers = workersOwned + zealotsOwned;
-    
     
     if(!m_enemyFound)
     {
@@ -50,7 +49,10 @@ void StarterBot::onFrame()
         isEnemyFound();
     }
     
-    if(m_enemyFound && zealotsOwned > 5)
+    
+    if(m_enemyFound 
+        && zealotsOwned> 10
+        )
     {
         startZealotRush();
     }
@@ -61,35 +63,22 @@ void StarterBot::onFrame()
         buildAdditionalSupply();
     }
 
-    if (workersOwned >= 10)
+    if (workersOwned >=10)
     {
         trainZealots(gatewaysOwned);
     }
-    if (workersOwned >= 8 && gatewaysOwned <= 2)
+    if((workersOwned ==8 && gatewaysOwned <=1) || (zealotsOwned==2))
     {
-        createAPylonAndGateways();
+        buildAdditionalSupply();
+        createGateways();
         //scoutStartingPositions();
-    }  
-    if(workersOwned < 16)
+    }
+
+    else if(workersOwned <=8 || (pylonsOwned>=1 && workersOwned<10))
     {
         trainAdditionalWorkers();
     }
-    if ((Tools::GetTotalSupply(true) - BWAPI::Broodwar->self()->supplyUsed()) <=4 && Tools::GetTotalSupply(true)>7)
-    {
-        buildAdditionalSupply();
-    }
-    if(workersOwned>=10)
-    {
-        trainZealots(gatewaysOwned);
-    }
-    if (totalWorkers <= Tools::GetTotalSupply(true))
-    {
-        auto diff = Tools::GetTotalSupply(true) - totalWorkers;
-        if (diff <= 1)
-        {
-            Tools::BuildBuilding(BWAPI::UnitTypes::Enum::Protoss_Pylon);
-        }
-    }
+    
     // Build more supply if we are going to run out soon
     //buildAdditionalSupply();
     BWAPI::Broodwar->drawTextScreen(BWAPI::Position(10, 20), "Junaid Haque, Fatema Haque");
@@ -112,21 +101,15 @@ void StarterBot::fleeZealot()
     }
 }
 
-void StarterBot::createAPylonAndGateways()
+void StarterBot::createGateways()
 {
     auto pylonsOwned = Tools::CountUnitsOfType(BWAPI::UnitTypes::Protoss_Pylon, BWAPI::Broodwar->self()->getUnits());
-    if (BWAPI::Broodwar->self()->minerals() >= 100 && pylonsOwned == 0)
-    {
-        Tools::BuildBuilding(BWAPI::UnitTypes::Enum::Protoss_Pylon);
-        /*Tools::BuildBuilding(BWAPI::UnitTypes::Enum::Protoss_Gateway);
-        Tools::BuildBuilding(BWAPI::UnitTypes::Enum::Protoss_Gateway);*/
-    }
 
     auto gatewaysOwned = Tools::CountUnitsOfType(BWAPI::UnitTypes::Protoss_Gateway, BWAPI::Broodwar->self()->getUnits());
 
-    if (pylonsOwned >= 1 && BWAPI::Broodwar->self()->minerals() >= 150 && gatewaysOwned <= 1)
+    if (pylonsOwned >= 1 && BWAPI::Broodwar->self()->minerals() >= 150 && gatewaysOwned <= 2)
     {
-        Tools::BuildBuilding(BWAPI::UnitTypes::Enum::Protoss_Gateway, true);
+        Tools::BuildBuilding(BWAPI::UnitTypes::Enum::Protoss_Gateway);
     }
 }
 // Send our idle workers to mine minerals so they don't just stand there
@@ -151,14 +134,22 @@ void StarterBot::sendIdleWorkersToMinerals()
 
 void StarterBot::trainZealots(int gatewaysOwned)
 {
-    if(gatewaysOwned > 0)
+    if(gatewaysOwned >0)
     {
         const BWAPI::Unitset& myUnits = BWAPI::Broodwar->self()->getUnits();
         for (auto& unit : myUnits)
         {
-            if(unit->getType() == BWAPI::UnitTypes::Protoss_Gateway && !unit->isTraining())
+            if(unit->getType() == BWAPI::UnitTypes::Protoss_Gateway && !unit->isTraining() && BWAPI::Broodwar->self()->minerals() >= 100)
             {
                 unit->train(BWAPI::UnitTypes::Protoss_Zealot);
+                m_zealotsInTraining++;
+            }
+            else if(!unit->isTraining() && BWAPI::Broodwar->self()->minerals() < 100)
+            {
+                if(m_zealotsInTraining>0)
+                {
+                    m_zealotsInTraining--;
+                }
             }
         }
     }
@@ -189,12 +180,15 @@ void StarterBot::zealotsAttack()
         {
             if (std::find(m_currentlyAttackingUnits.begin(), m_currentlyAttackingUnits.end(), unit) != m_currentlyAttackingUnits.end()) 
             {
-                /* v contains x */
+                if(!unit->isAttacking())
+                {
+                    remove(m_currentlyAttackingUnits.begin(), m_currentlyAttackingUnits.end(), unit);
+                }
             }
-            else 
+            else
             {
-                auto closestEnemy = Tools::GetClosestVisibleEnemyTo(unit);
                 unit->stop();
+                auto closestEnemy = Tools::GetClosestVisibleEnemyTo(unit);
                 unit->attack(closestEnemy);
                 m_currentlyAttackingUnits.push_back(unit);
                 /* v does not contain x */
@@ -307,6 +301,14 @@ void StarterBot::onSendText(std::string text)
     if (text == "/map")
     {
         m_mapTools.toggleDraw();
+    }
+    else if(text == "speed1")
+    {
+        BWAPI::Broodwar->setLocalSpeed(1);
+    }
+    else if (text == "speed5")
+    {
+        BWAPI::Broodwar->setLocalSpeed(5);
     }
 }
 

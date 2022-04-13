@@ -14,6 +14,7 @@ class StarterBot
 	BWAPI::Position m_enemyBasePosition;
 	bool m_currentlyBuilding = false;
 	std::vector<BWAPI::Unit> m_currentlyAttackingUnits;
+	int m_zealotsInTraining = 0;
 public:
 
     StarterBot();
@@ -24,7 +25,7 @@ public:
 	void trainZealots(int gatewaysOwned);
     void buildAdditionalSupply();
     void drawDebugInformation();
-	void createAPylonAndGateways();
+	void createGateways();
 	void scoutStartingPositions();
 	void isEnemyFound();
 	void startZealotRush();
