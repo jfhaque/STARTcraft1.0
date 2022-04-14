@@ -120,6 +120,7 @@ void StarterBot::createGateways()
     if (pylonsOwned >= 1 && BWAPI::Broodwar->self()->minerals() >= 150 && gatewaysOwned <= 2)
     {
         Tools::BuildBuilding(BWAPI::UnitTypes::Enum::Protoss_Gateway);
+        
     }
 }
 // Send our idle workers to mine minerals so they don't just stand there
@@ -261,6 +262,7 @@ void StarterBot::scoutStartingPositions()
                 m_enemyBasePosition = pos;
                 scout->move(pos);
                 m_scout = scout;
+                Tools::m_scoutID = scout->getID();
                 break;
             }
         }

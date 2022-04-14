@@ -19,6 +19,7 @@ public:
 
     StarterBot();
 
+	BWAPI::Unit m_scout = nullptr;
     // helper functions to get you started with bot programming and learn the API
     void sendIdleWorkersToMinerals();
     void trainAdditionalWorkers();
