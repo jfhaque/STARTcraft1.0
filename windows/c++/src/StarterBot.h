@@ -14,7 +14,7 @@ class StarterBot
 	BWAPI::Position m_enemyBasePosition;
 	bool m_currentlyBuilding = false;
 	std::vector<BWAPI::Unit> m_currentlyAttackingUnits;
-	int m_zealotsInTraining = 0;
+	int m_rushCount = 0;
 public:
 
     StarterBot();

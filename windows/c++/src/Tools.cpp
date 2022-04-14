@@ -104,7 +104,7 @@ bool Tools::BuildBuilding(BWAPI::UnitType type, bool forceConstruct)
 
         for (auto& unit : units)
         {
-            if (unit->isConstructing())
+            if (unit->getType()==BWAPI::Broodwar->self()->getRace().getWorker() && unit->isConstructing())
             {
                 return false;
             }

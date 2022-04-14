@@ -50,11 +50,21 @@ void StarterBot::onFrame()
     }
     
     
-    if(m_enemyFound 
-        && zealotsOwned> 10
-        )
+    if(m_enemyFound )
     {
-        startZealotRush();
+        auto zealotsAtBase = 0;
+        auto& units = BWAPI::Broodwar->self()->getUnits();
+        for(auto& unit: units)
+        {
+            if(unit->getType()== BWAPI::UnitTypes::Protoss_Zealot && unit->isIdle() && unit->getDistance(Tools::GetDepot())< unit->getDistance(m_enemyBasePosition))
+            {
+                zealotsAtBase++;
+            }
+        }
+        if((zealotsAtBase>=2 && m_rushCount==0) || (m_rushCount>0 && zealotsAtBase>=10))
+        {
+            startZealotRush();
+        }
     }
     //fleeZealot();
     zealotsAttack();
@@ -67,14 +77,14 @@ void StarterBot::onFrame()
     {
         trainZealots(gatewaysOwned);
     }
-    if((workersOwned ==8 && gatewaysOwned <=1) || (zealotsOwned==2))
+    if((workersOwned ==8 && gatewaysOwned <=1) || (BWAPI::Broodwar->self()->minerals() >=500  && gatewaysOwned<=2))
     {
         buildAdditionalSupply();
         createGateways();
         //scoutStartingPositions();
     }
 
-    else if(workersOwned <=8 || (pylonsOwned>=1 && workersOwned<10))
+    else if(workersOwned <=8 || (pylonsOwned>=1 && workersOwned<10) || (m_rushCount==1 && workersOwned<15))
     {
         trainAdditionalWorkers();
     }
@@ -142,14 +152,6 @@ void StarterBot::trainZealots(int gatewaysOwned)
             if(unit->getType() == BWAPI::UnitTypes::Protoss_Gateway && !unit->isTraining() && BWAPI::Broodwar->self()->minerals() >= 100)
             {
                 unit->train(BWAPI::UnitTypes::Protoss_Zealot);
-                m_zealotsInTraining++;
-            }
-            else if(!unit->isTraining() && BWAPI::Broodwar->self()->minerals() < 100)
-            {
-                if(m_zealotsInTraining>0)
-                {
-                    m_zealotsInTraining--;
-                }
             }
         }
     }
@@ -164,8 +166,10 @@ void StarterBot::startZealotRush()
         if (unit->isIdle() && unit->getType() == BWAPI::UnitTypes::Protoss_Zealot && unit->isCompleted() && unit->getShields() > 40)
         {
             unit->move(m_enemyBasePosition,true);
+            
         }
     }
+    m_rushCount++;
 }
 
 void StarterBot::zealotsAttack()
@@ -173,27 +177,33 @@ void StarterBot::zealotsAttack()
     auto& units = BWAPI::Broodwar->self()->getUnits();
     auto& enemyUnits = BWAPI::Broodwar->enemy()->getUnits();
 
-    for (auto& unit : units) 
+    for (auto& unit : units)
     {
+        
         auto closestEnemy = Tools::GetClosestVisibleEnemyTo(unit);
         if (unit->getType() == BWAPI::UnitTypes::Protoss_Zealot && unit->canAttackUnit() && closestEnemy->isVisible())
         {
-            if (std::find(m_currentlyAttackingUnits.begin(), m_currentlyAttackingUnits.end(), unit) != m_currentlyAttackingUnits.end()) 
+            if (std::find(m_currentlyAttackingUnits.begin(), m_currentlyAttackingUnits.end(), unit) != m_currentlyAttackingUnits.end())
             {
-                if(!unit->isAttacking())
+                if (!unit->isAttacking())
                 {
                     remove(m_currentlyAttackingUnits.begin(), m_currentlyAttackingUnits.end(), unit);
                 }
             }
             else
             {
-                unit->stop();
-                auto closestEnemy = Tools::GetClosestVisibleEnemyTo(unit);
-                unit->attack(closestEnemy);
-                m_currentlyAttackingUnits.push_back(unit);
+                if (unit->getDistance(closestEnemy) < 1000)
+                {
+                    unit->stop();
+                    //closestEnemy = Tools::GetClosestVisibleEnemyTo(unit);
+                    unit->attack(closestEnemy);
+                    m_currentlyAttackingUnits.push_back(unit);
+                }
+                
                 /* v does not contain x */
             }
         }
+        
     }
 }
 // Train more workers so we can gather more income
@@ -225,10 +235,13 @@ void StarterBot::buildAdditionalSupply()
     // Otherwise, we are going to build a supply provider
     const BWAPI::UnitType supplyProviderType = BWAPI::Broodwar->self()->getRace().getSupplyProvider();
 
-    const bool startedBuilding = Tools::BuildBuilding(supplyProviderType,true);
-    if (startedBuilding)
+    if (BWAPI::Broodwar->self()->minerals() >= 100) 
     {
-        BWAPI::Broodwar->printf("Started Building %s", supplyProviderType.getName().c_str());
+        const bool startedBuilding = Tools::BuildBuilding(supplyProviderType, true);
+        if (startedBuilding)
+        {
+            BWAPI::Broodwar->printf("Started Building %s", supplyProviderType.getName().c_str());
+        }
     }
 }
 
@@ -269,6 +282,7 @@ void StarterBot:: isEnemyFound()
             //m_randomEnemy = Tools::GetClosestUnitTo(m_scout, units);
             m_enemyFound = true;
             m_scout = nullptr;
+            break;
         }
         
     } 
