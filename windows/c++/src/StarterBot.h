@@ -14,12 +14,16 @@ class StarterBot
 	BWAPI::Position m_enemyBasePosition;
 	bool m_currentlyBuilding = false;
 	std::vector<BWAPI::Unit> m_currentlyAttackingUnits;
-	int m_zealotsInTraining = 0;
+	int m_rushCount = 0;
+	int m_scoutsDead = 0;
+	bool m_scoutFleeCompleted = false;
 public:
 
     StarterBot();
 
     // helper functions to get you started with bot programming and learn the API
+	void zealotRush();
+	void photonCannonRush();
     void sendIdleWorkersToMinerals();
     void trainAdditionalWorkers();
 	void trainZealots(int gatewaysOwned);
