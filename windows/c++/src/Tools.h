@@ -9,8 +9,9 @@ namespace Tools
     BWAPI::Unit GetClosestUnitTo(BWAPI::Unit unit, const BWAPI::Unitset& units);
     BWAPI::Unit GetClosestVisibleEnemyTo(BWAPI::Unit unit);
 
-    int CountUnitsOfType(BWAPI::UnitType type, const BWAPI::Unitset& units); 
+    int CountUnitsOfType(BWAPI::UnitType type, const BWAPI::Unitset& units, bool includeOnlyCompleted =false); 
 
+    int DistanceBetweenPositions(BWAPI::Position p1, BWAPI::Position p2);
     BWAPI::Unit GetUnitOfType(BWAPI::UnitType type);
     BWAPI::Unit GetUnitOfTypeClosestTo(BWAPI::UnitType type, BWAPI::Position p);
     BWAPI::Unit GetDepot();

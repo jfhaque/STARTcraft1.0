@@ -15,12 +15,15 @@ class StarterBot
 	bool m_currentlyBuilding = false;
 	std::vector<BWAPI::Unit> m_currentlyAttackingUnits;
 	int m_rushCount = 0;
+	int m_scoutsDead = 0;
+	bool m_scoutFleeCompleted = false;
 public:
 
     StarterBot();
 
-	BWAPI::Unit m_scout = nullptr;
     // helper functions to get you started with bot programming and learn the API
+	void zealotRush();
+	void photonCannonRush();
     void sendIdleWorkersToMinerals();
     void trainAdditionalWorkers();
 	void trainZealots(int gatewaysOwned);

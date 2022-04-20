@@ -1,5 +1,6 @@
 #include "Tools.h"
 #include "StarterBot.h"
+#include <math.h>
 
 BWAPI::Unit Tools::GetClosestUnitTo(BWAPI::Position p, const BWAPI::Unitset& units)
 {
@@ -53,20 +54,38 @@ BWAPI::Unit Tools::GetUnitOfTypeClosestTo(BWAPI::UnitType type, BWAPI::Position 
     
 }
 
-int Tools::CountUnitsOfType(BWAPI::UnitType type, const BWAPI::Unitset& units)
+int Tools::CountUnitsOfType(BWAPI::UnitType type, const BWAPI::Unitset& units, bool includeOnlyCompleted)
 {
     int sum = 0;
     for (auto& unit : units)
     {
-        if (unit->getType() == type)
+        if(includeOnlyCompleted)
         {
-            sum++;
+            if (unit->getType() == type && unit->isCompleted())
+            {
+                sum++;
+            }
+        }
+        else 
+        {
+            if (unit->getType() == type)
+            {
+                sum++;
+            }
         }
     }
 
     return sum;
 }
 
+int Tools::DistanceBetweenPositions(BWAPI::Position p1, BWAPI::Position p2)
+{
+    auto xSquare = (p1.x - p2.x) * (p1.x - p2.x);
+    auto ySquare = (p1.y - p2.y) * (p1.y - p2.y);
+    auto cSquare = xSquare + ySquare;
+    auto c = (int)sqrt(cSquare);
+    return c;
+}
 
 BWAPI::Unit Tools::GetUnitOfType(BWAPI::UnitType type)
 {
