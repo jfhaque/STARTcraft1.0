@@ -17,6 +17,7 @@ class StarterBot
 	int m_rushCount = 0;
 	int m_scoutsDead = 0;
 	bool m_scoutFleeCompleted = false;
+	BWAPI::TilePosition m_scoutBuildPosition;
 public:
 
     StarterBot();

@@ -49,7 +49,7 @@ void StarterBot::onFrame()
 
         auto firstDistance= Tools::DistanceBetweenPositions(BWAPI::Position(BWAPI::Broodwar->self()->getStartLocation()), m_enemyBasePosition);
         auto secondDistance = Tools::DistanceBetweenPositions(m_scout->getPosition(), BWAPI::Position(BWAPI::Broodwar->self()->getStartLocation()));
-        if(firstDistance-secondDistance >400 && !m_scoutFleeCompleted)
+        if(firstDistance-secondDistance >350 && !m_scoutFleeCompleted)
         {
             m_scout->stop();
             m_scoutFleeCompleted = true;
@@ -125,32 +125,36 @@ void StarterBot::photonCannonRush()
         if(BWAPI::Broodwar->self()->minerals() >= 100 && numberOfForgesCompleted>=1 && numberOfPylons<3)
         {
             BWAPI::TilePosition buildPosition = BWAPI::Broodwar->getBuildLocation(BWAPI::UnitTypes::Protoss_Pylon, m_scout->getTilePosition(), 64);
-            if(BWAPI::Broodwar->canBuildHere(buildPosition, m_scout->getType(), m_scout))
+            if(m_scoutBuildPosition == buildPosition && !m_scout->isMoving())
+            {
+                auto xOffset = m_scout->getPosition().x > 1000 ? -100 : +100;
+                auto yOffset = m_scout->getPosition().y > 400 ? -100 : +100;
+
+                m_scout->move(BWAPI::Position(m_scout->getPosition().x + xOffset, m_scout->getPosition().y + yOffset));
+            }
+
+            else if (!m_scout->isConstructing())
             {
                 bool isBuilding = m_scout->build(BWAPI::UnitTypes::Protoss_Pylon, buildPosition);
-                if(!isBuilding)
-                {
-                    auto xOffset = m_scout->getPosition().x > 1000 ? -100 : +100;
-                    auto yOffset = m_scout->getPosition().y > 400 ? -100 : +100;
-
-                    m_scout->move(BWAPI::Position(m_scout->getPosition().x + xOffset, m_scout->getPosition().y + yOffset));
-                }
+                m_scoutBuildPosition = buildPosition;
             }
         }
 
         if(BWAPI::Broodwar->self()->minerals()>= 150 && numberOfPylons>=2 && numberOfForgesCompleted>=1)
         {
             BWAPI::TilePosition buildPosition = BWAPI::Broodwar->getBuildLocation(BWAPI::UnitTypes::Protoss_Photon_Cannon, m_scout->getTilePosition(), 64);
-            if (BWAPI::Broodwar->canBuildHere(buildPosition, m_scout->getType(), m_scout))
+            if (m_scoutBuildPosition == buildPosition && !m_scout->isMoving())
             {
-                auto isBuilding = m_scout->build(BWAPI::UnitTypes::Protoss_Photon_Cannon, buildPosition);
-                if (!isBuilding)
-                {
-                    auto xOffset = m_scout->getPosition().x > 1000 ? -100 : +100;
-                    auto yOffset = m_scout->getPosition().y > 400 ? -100 : +100;
+                auto xOffset = m_scout->getPosition().x > 1000 ? -100 : +100;
+                auto yOffset = m_scout->getPosition().y > 400 ? -100 : +100;
 
-                    m_scout->move(BWAPI::Position(m_scout->getPosition().x + xOffset, m_scout->getPosition().y + yOffset));
-                }
+                m_scout->move(BWAPI::Position(m_scout->getPosition().x + xOffset, m_scout->getPosition().y + yOffset));
+            }
+
+            else if(!m_scout->isConstructing())
+            {
+                bool isBuilding = m_scout->build(BWAPI::UnitTypes::Protoss_Photon_Cannon, buildPosition);
+                m_scoutBuildPosition = buildPosition;
             }
         }
     }
@@ -180,7 +184,11 @@ void StarterBot::zealotRush()
             startZealotRush();
         }
     }
-    //fleeZealot();
+    if(m_rushCount<3)
+    {
+        fleeZealot();
+    }
+    
     zealotsAttack();
     if ((Tools::GetTotalSupply(true) - BWAPI::Broodwar->self()->supplyUsed()) <= 12 && Tools::GetTotalSupply(true) > 20)
     {
@@ -385,7 +393,6 @@ void StarterBot:: isEnemyFound()
         BWAPI::Race enemyRace = unit->getType().getRace();
             m_enemyRace = enemyRace;
             m_enemyFound = true;
-            m_enemyBasePosition = m_scout->getPosition();
             m_scout->stop();
                 
             if(m_enemyRace!= BWAPI::Races::Zerg)
